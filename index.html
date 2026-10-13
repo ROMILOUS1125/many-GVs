@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>彩虹油膜相册</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{
+  width:100%;
+  height:100%;
+  overflow:hidden;
+}
+/* 油膜彩虹动态背景 */
+body{
+  background: linear-gradient(45deg, #ff0066,#ffaa00,#ffff00,#22dd66,#00aaff,#9944ff,#ff0066);
+  background-size:400% 400%;
+  animation: oilFilm 12s ease infinite;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+@keyframes oilFilm{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+/* 媒体容器 + 淡入淡出动画 */
+.media-box{
+  width:85vw;
+  max-height:75vh;
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 8px 32px rgba(0,0,0,0.25);
+  opacity:1;
+  transition: opacity 0.4s ease;
+}
+.media-box.fade-out{
+  opacity:0;
+}
+.media-box img,.media-box video{
+  width:100%;
+  height:auto;
+  display:block;
+  object-fit:contain;
+}
+/* 底部提示文字 */
+.tip{
+  position:absolute;
+  bottom:70px;
+  color:white;
+  font-size:16px;
+  text-shadow:0 1px 6px #000;
+}
+/* 小圆点指示器 */
+.dots-container{
+  position:absolute;
+  bottom:30px;
+  display:flex;
+  gap:10px;
+}
+.dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.4);
+  transition: all 0.3s;
+}
+.dot.active{
+  background:#ffffff;
+  transform:scale(1.2);
+}
+/* 左右箭头按钮 */
+.arrow{
+  position:absolute;
+  top:50%;
+  transform: translateY(-50%);
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.25);
+  color:#fff;
+  font-size:24px;
+  border:none;
+  cursor:pointer;
+  backdrop-filter: blur(4px);
+  transition: 0.3s;
+}
+.arrow:hover{
+  background:rgba(255,255,255,0.45);
+}
+.prev{
+  left:6vw;
+}
+.next{
+  right:6vw;
+}
+</style>
+</head>
+<body>
+<button class="arrow prev" id="prevBtn">‹</button>
+<div class="media-box" id="mediaWrap">
+</div>
+<button class="arrow next" id="nextBtn">›</button>
+
+<div class="tip">点击屏幕 或 使用箭头切换页面</div>
+<div class="dots-container" id="dotsWrap"></div>
+
+<script>
+// =========在这里替换你的图片、视频地址==========
+const mediaList = [
+  {type:"img",src:"photo1.jpg"},
+  {type:"img",src:"photo2.jpg"},
+  {type:"video",src:"video1.mp4"},
+  {type:"img",src:"photo3.jpg"},
+  {type:"video",src:"video2.mp4"},
+];
+let currentIndex = 0;
+const wrap = document.getElementById("mediaWrap");
+const dotsWrap = document.getElementById("dotsWrap");
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
+let isAnimating = false;
+
+// 创建底部圆点
+function createDots(){
+  dotsWrap.innerHTML = "";
+  mediaList.forEach((_,idx)=>{
+    const dot = document.createElement('div');
+    dot.className = "dot";
+    if(idx === currentIndex) dot.classList.add("active");
+    dotsWrap.appendChild(dot);
+  })
+}
+
+//渲染当前媒体
+function render(){
+  const item = mediaList[currentIndex];
+  if(item.type === "img"){
+    wrap.innerHTML = `<img src="${item.src}">`;
+  }else{
+    wrap.innerHTML = `<video src="${item.src}" controls autoplay muted loop></video>`;
+  }
+  //更新圆点激活状态
+  const dots = dotsWrap.querySelectorAll('.dot');
+  dots.forEach((dot,idx)=>{
+    dot.classList.toggle('active', idx === currentIndex)
+  })
+}
+
+//切换逻辑
+async function goNext(){
+  if(isAnimating) return;
+  isAnimating = true;
+  wrap.classList.add("fade-out");
+  await new Promise(resolve=>setTimeout(resolve,400));
+  currentIndex = (currentIndex +1) % mediaList.length;
+  render();
+  wrap.classList.remove("fade-out");
+  await new Promise(resolve=>setTimeout(resolve,400));
+  isAnimating = false;
+}
+async function goPrev(){
+  if(isAnimating) return;
+  isAnimating = true;
+  wrap.classList.add("fade-out");
+  await new Promise(resolve=>setTimeout(resolve,400));
+  currentIndex = (currentIndex -1 + mediaList.length) % mediaList.length;
+  render();
+  wrap.classList.remove("fade-out");
+  await new Promise(resolve=>setTimeout(resolve,400));
+  isAnimating = false;
+}
+
+//绑定事件
+document.body.onclick = goNext;
+nextBtn.onclick = (e)=>{
+  e.stopPropagation();
+  goNext();
+}
+prevBtn.onclick = (e)=>{
+  e.stopPropagation();
+  goPrev();
+}
+
+//初始化
+createDots();
+render();
+</script>
+</body>
+</html>
